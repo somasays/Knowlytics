@@ -5,7 +5,6 @@ import os
 from app.api.endpoints import data_products
 
 app = FastAPI()
-
 app.include_router(data_products.router, prefix="/api/v1")
 
 @app.get("/health")

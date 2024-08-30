@@ -3,8 +3,11 @@ import os
 
 class Neo4jService:
     def __init__(self):
-        self.driver = GraphDatabase.driver(os.getenv("NEO4J_URL"))
-
+        neo4j_url = os.getenv("NEO4J_URL")
+        if not neo4j_url:
+            raise ValueError("NEO4J_URL environment variable is not set")
+        self.driver = GraphDatabase.driver(neo4j_url)
+        
     def close(self):
         self.driver.close()
 
