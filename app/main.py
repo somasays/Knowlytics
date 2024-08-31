@@ -2,10 +2,12 @@ from fastapi import FastAPI
 from elasticsearch import Elasticsearch
 from neo4j import GraphDatabase
 import os
-from app.api.endpoints import data_products
+from app.api.endpoints import data_products, glossary, search
 
 app = FastAPI()
 app.include_router(data_products.router, prefix="/api/v1")
+app.include_router(glossary.router, prefix="/api/v1")
+app.include_router(search.router, prefix="/api/v1")
 
 @app.get("/health")
 async def health_check():
