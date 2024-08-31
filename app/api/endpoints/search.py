@@ -14,11 +14,14 @@ def get_search_service(
 
 @router.get("/search", response_model=Dict[str, List[Dict[str, Any]]])
 async def semantic_search(
-    query: str = Query(..., min_length=1),  # Use Query to make it a required parameter
+    query: str = Query(..., min_length=1, max_length=100),
     search_service: SemanticSearchService = Depends(get_search_service)
 ):
+    if not query.strip():
+        raise HTTPException(status_code=400, detail="Search query cannot be empty")
+
     try:
         results = search_service.search(query)
         return {"results": results}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An error occurred during the search: {str(e)}")

@@ -104,14 +104,14 @@ def test_error_handling(mock_neo4j_init, mock_es_init, mock_semantic_search_serv
         response = client.get("/api/v1/search?query=error")
         
         assert response.status_code == 500
-        assert response.json() == {"detail": "Internal Server Error: Internal server error"}
+        assert response.json() == {"detail": "An error occurred during the search: Internal server error"}
         mock_semantic_search_service.search.assert_called_once_with("error")
     finally:
         app.dependency_overrides.clear()
 
 @patch.object(ElasticsearchService, '__init__', return_value=None)
 @patch.object(Neo4jService, '__init__', return_value=None)
-def test_search_with_related_entities(mock_neo4j_init, mock_es_init, mock_semantic_search_service):
+def test_search_with_related_entities(mock_es_service, mock_neo4j_service, mock_semantic_search_service):
     mock_results = [
         {
             "id": "DP001",

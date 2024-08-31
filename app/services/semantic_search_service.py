@@ -12,7 +12,8 @@ class SemanticSearchService:
             "query": {
                 "multi_match": {
                     "query": query,
-                    "fields": ["name", "description", "term", "definition"]
+                    "fields": ["name", "description", "term", "definition"],
+                    "fuzziness": "AUTO"
                 }
             }
         })
@@ -25,22 +26,31 @@ class SemanticSearchService:
             "MATCH (n) WHERE n.id IN $ids OR n.term IN $ids "
             "WITH n "
             "OPTIONAL MATCH (n)-[r]-(related) "
-            "RETURN n, type(r) as relationship_type, related"
+            "RETURN n, type(r) as relationship_type, related, "
+            "size((n)-[]-()) as connection_count"
         )
         graph_results = self.neo4j_service.run_query(neo4j_query, {"ids": ids})
 
-        # Combine and rank results (basic ranking for now)
+        # Combine and rank results
         combined_results = []
         for hit in es_results["hits"]["hits"]:
             result = hit["_source"]
             result["score"] = hit["_score"]
-            result["related_entities"] = [
-                item["related"] for item in graph_results 
-                if item["n"]["id"] == hit["_id"] or item["n"]["term"] == hit["_id"]
-            ]
+            result["related_entities"] = []
+            connection_count = 0
+            for item in graph_results:
+                if item["n"]["id"] == hit["_id"] or item["n"]["term"] == hit["_id"]:
+                    result["related_entities"].append({
+                        "entity": item["related"],
+                        "relationship_type": item["relationship_type"]
+                    })
+                    connection_count = item["connection_count"]
+            
+            # Adjust score based on connection count
+            result["score"] *= (1 + (connection_count * 0.1))
             combined_results.append(result)
 
-        # Sort by Elasticsearch score (basic ranking)
+        # Sort by adjusted score
         combined_results.sort(key=lambda x: x["score"], reverse=True)
 
         return combined_results
