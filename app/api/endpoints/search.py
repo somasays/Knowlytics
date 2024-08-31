@@ -24,4 +24,5 @@ async def semantic_search(
         results = search_service.search(query)
         return {"results": results}
     except Exception as e:
+        print(f"Error during search: {str(e)}")  # Add this line for debugging
         raise HTTPException(status_code=500, detail=f"An error occurred during the search: {str(e)}")
