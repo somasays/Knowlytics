@@ -3,6 +3,9 @@ from app.services.semantic_search_service import SemanticSearchService
 from app.services.elasticsearch_service import ElasticsearchService
 from app.services.neo4j_service import Neo4jService
 from typing import List, Dict, Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -20,9 +23,5 @@ async def semantic_search(
     if not query.strip():
         raise HTTPException(status_code=400, detail="Search query cannot be empty")
 
-    try:
-        results = search_service.search(query)
-        return {"results": results}
-    except Exception as e:
-        print(f"Error during search: {str(e)}")  # Add this line for debugging
-        raise HTTPException(status_code=500, detail=f"An error occurred during the search: {str(e)}")
+    results = search_service.search(query)
+    return {"results": results}  # This will return an empty list if there's an error or no results

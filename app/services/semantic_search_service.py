@@ -1,6 +1,10 @@
 from app.services.elasticsearch_service import ElasticsearchService
 from app.services.neo4j_service import Neo4jService
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class SemanticSearchService:
     def __init__(self, es_service: ElasticsearchService, neo4j_service: Neo4jService):
         self.es_service = es_service
@@ -13,39 +17,30 @@ class SemanticSearchService:
                 "query": {
                     "multi_match": {
                         "query": query,
-                        "fields": ["name", "description", "term", "definition"],
-                        "fuzziness": "AUTO"
+                        "fields": ["name", "description", "term", "definition"]
                     }
                 }
             })
 
-            # Extract IDs from Elasticsearch results
-            ids = [hit["_id"] for hit in es_results["hits"]["hits"]]
-
-            # Perform Neo4j graph search for related entities
-            neo4j_query = (
-                "MATCH (n) WHERE n.id IN $ids OR n.term IN $ids "
-                "WITH n "
-                "OPTIONAL MATCH (n)-[r]-(related) "
-                "RETURN n, type(r) as relationship_type, related, "
-                "size((n)-[]-()) as connection_count"
-            )
-            graph_results = self.neo4j_service.run_query(neo4j_query, {"ids": ids})
-
-            # Combine and rank results
             combined_results = []
-            for hit in es_results["hits"]["hits"]:
-                result = hit["_source"]
-                result["score"] = hit["_score"]
-                result["related_entities"] = []
-                connection_count = 0
-                for item in graph_results:
-                    if item["n"]["id"] == hit["_id"] or item["n"]["term"] == hit["_id"]:
-                        result["related_entities"].append({
-                            "entity": item["related"],
-                            "relationship_type": item["relationship_type"]
-                        })
-                        connection_count = item["connection_count"]
+            for hit in es_results['hits']['hits']:
+                result = {
+                    "id": hit["_id"],
+                    "name": hit["_source"].get("name") or hit["_source"].get("term"),
+                    "description": hit["_source"].get("description") or hit["_source"].get("definition"),
+                    "type": "data_product" if "name" in hit["_source"] else "glossary_term",
+                    "score": hit["_score"],
+                    "related_entities": []
+                }
+
+                # Get related entities from Neo4j
+                related = self.neo4j_service.get_related_entities(result["id"])
+                for item in related:
+                    result["related_entities"].append({
+                        "entity": item["related"],
+                        "relationship_type": item["relationship_type"]
+                    })
+                    connection_count = item["connection_count"]
                 
                 # Adjust score based on connection count
                 result["score"] *= (1 + (connection_count * 0.1))
@@ -56,5 +51,5 @@ class SemanticSearchService:
 
             return combined_results
         except Exception as e:
-            print(f"Error in SemanticSearchService.search: {str(e)}")  # Add this line for debugging
-            raise
+            logger.error(f"Error in SemanticSearchService.search: {str(e)}")
+            return []  # Return an empty list instead of raising an exception
