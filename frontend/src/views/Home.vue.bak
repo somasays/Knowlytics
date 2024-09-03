@@ -1,0 +1,62 @@
+<template>
+  <div class="home">
+    <h1>Home Page</h1>
+    <SearchBar />
+    <div class="tabs">
+      <button 
+        v-for="tab in tabs" 
+        :key="tab.name"
+        :class="{ active: activeTab === tab.name }"
+        @click="activeTab = tab.name"
+      >
+        {{ tab.label }}
+      </button>
+    </div>
+    <div class="tab-content">
+      <div v-if="activeTab === 'all'">
+        <SearchResults v-if="searchPerformed" />
+        <div v-else>
+          <p>Use the search bar above to find data assets.</p>
+        </div>
+      </div>
+      <div v-else-if="activeTab === 'mentions'">
+        @Mentions content (to be implemented)
+      </div>
+      <div v-else-if="activeTab === 'tasks'">
+        Tasks content (to be implemented)
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref, computed } from 'vue';
+import { useStore } from 'vuex';
+import SearchBar from '@/components/SearchBar.vue';
+import SearchResults from '@/components/SearchResults.vue';
+
+export default {
+  name: 'HomePage',
+  components: {
+    SearchBar,
+    SearchResults
+  },
+  setup() {
+    const store = useStore();
+    const activeTab = ref('all');
+    const tabs = [
+      { name: 'all', label: 'All' },
+      { name: 'mentions', label: '@Mentions' },
+      { name: 'tasks', label: 'Tasks' }
+    ];
+
+    const searchPerformed = computed(() => store.state.searchPerformed);
+
+    return {
+      activeTab,
+      tabs,
+      searchPerformed
+    };
+  }
+}
+</script>
