@@ -24,4 +24,5 @@ async def semantic_search(
         raise HTTPException(status_code=400, detail="Search query cannot be empty")
 
     results = search_service.search(query)
+    logger.info(f"Search results for query '{query}': {results}")
     return {"results": results}  # This will return an empty list if there's an error or no results

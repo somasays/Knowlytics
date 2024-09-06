@@ -12,4 +12,4 @@ class ElasticsearchService:
         return self.es.index(index=index, document=document)
 
     def search(self, index, query):
-        return self.es.search(index=index, body=query)
+        return self.es.search(index=index, query=query)

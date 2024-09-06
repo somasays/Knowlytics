@@ -9,10 +9,10 @@
       {{ searchError }}
     </div>
     <div v-else-if="searchResults.length > 0" class="results-list">
-      <div v-for="result in searchResults" :key="result._id" class="result-item">
-        <h3>{{ result._source.name || result._source.term }}</h3>
-        <p>{{ result._source.description || result._source.definition }}</p>
-        <span class="result-type">Type: {{ result._index }}</span>
+      <div v-for="result in searchResults" :key="result.id" class="result-item">
+        <h3>{{ result.source.name || result.source.term }}</h3>
+        <p>{{ result.source.description || result.source.definition }}</p>
+        <span class="result-type">Type: {{ result.type }}</span>
       </div>
     </div>
     <div v-else-if="searchPerformed" class="no-results">

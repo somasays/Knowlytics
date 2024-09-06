@@ -12,38 +12,33 @@ class SemanticSearchService:
 
     def search(self, query: str):
         try:
-            # Perform Elasticsearch full-text search
-            es_results = self.es_service.search("data_products,glossary_terms", {
-                "query": {
+            # Perform Elasticsearch search
+            es_results = self.es_service.search(
+                index="data_products,glossary_terms",
+                query={
                     "multi_match": {
                         "query": query,
-                        "fields": ["name", "description", "term", "definition"]
+                        "fields": ["name^2", "description", "term^2", "definition"]
                     }
                 }
-            })
+            )
 
             combined_results = []
-            for hit in es_results['hits']['hits']:
+            for hit in es_results["hits"]["hits"]:
                 result = {
                     "id": hit["_id"],
-                    "name": hit["_source"].get("name") or hit["_source"].get("term"),
-                    "description": hit["_source"].get("description") or hit["_source"].get("definition"),
-                    "type": "data_product" if "name" in hit["_source"] else "glossary_term",
+                    "type": hit["_index"],
                     "score": hit["_score"],
-                    "related_entities": []
+                    "source": hit["_source"]
                 }
 
                 # Get related entities from Neo4j
-                related = self.neo4j_service.get_related_entities(result["id"])
-                for item in related:
-                    result["related_entities"].append({
-                        "entity": item["related"],
-                        "relationship_type": item["relationship_type"]
-                    })
-                    connection_count = item["connection_count"]
-                
-                # Adjust score based on connection count
-                result["score"] *= (1 + (connection_count * 0.1))
+                related_entities = self.neo4j_service.get_related_entities(hit["_id"])
+                result["related_entities"] = related_entities
+
+                # Adjust score based on related entities
+                result["score"] += len(related_entities) * 0.1
+
                 combined_results.append(result)
 
             # Sort by adjusted score

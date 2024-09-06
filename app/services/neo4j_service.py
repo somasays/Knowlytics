@@ -15,3 +15,10 @@ class Neo4jService:
         with self.driver.session() as session:
             result = session.run(query, parameters)
             return [record.data() for record in result]
+
+    def get_related_entities(self, entity_id):
+        query = """
+        MATCH (n {id: $id})-[r]-(related)
+        RETURN type(r) as relationship_type, related.id as related_id, labels(related) as related_labels
+        """
+        return self.run_query(query, {"id": entity_id})

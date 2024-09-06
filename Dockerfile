@@ -5,6 +5,10 @@ WORKDIR /app
 COPY Pipfile Pipfile.lock ./
 RUN pip install pipenv && pipenv install --system --deploy
 
-COPY ./app ./app
+RUN pip install watchdog
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+COPY . .
+
+# ENV PYTHONPATH=/app
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
