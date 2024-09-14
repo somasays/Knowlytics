@@ -18,9 +18,8 @@ export default createStore({
     },
     setSearchError(state, error) {
       state.searchError = error
-      state.searchPerformed = true // Added this line
+      state.searchPerformed = true
     },
-    // Added this mutation
     resetSearch(state) {
       state.searchResults = []
       state.searchError = null
@@ -31,18 +30,17 @@ export default createStore({
     async performSearch({ commit }, query) {
       console.log('Action: performSearch initiated with query:', query)
       commit('setSearchLoading', true)
-      commit('resetSearch') // Added this line
+      commit('resetSearch')
       try {
-        console.log('Sending API request to:', '/api/v1/search')
-        const response = await axios.get('/api/v1/search', { // Changed from '/api/search'
+        const response = await axios.get('/api/v1/search', {
           params: { query }
         })
         console.log('API response received:', response)
-        console.log('Search results:', response.data.results)
-        commit('setSearchResults', response.data.results)
-        // if (response.data.results.length > 0) {
-        //   await router.push('/search')
-        // }
+        if (response.data && response.data.results) {
+          commit('setSearchResults', response.data.results)
+        } else {
+          commit('setSearchResults', [])
+        }
       } catch (error) {
         console.error('Error performing search:', error)
         commit('setSearchError', 'An error occurred while searching. Please try again.')

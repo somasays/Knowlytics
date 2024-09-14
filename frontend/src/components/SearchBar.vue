@@ -25,20 +25,18 @@ import { ref } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 
-
 export default {
   name: 'SearchBar',
   setup() {
     const store = useStore()
+    const router = useRouter()
     const selectedType = ref('all')
     const searchQuery = ref('')
-    const router = useRouter()
+
     const performSearch = async () => {
       console.log('Initiating search with query:', searchQuery.value)
-      if (searchQuery.value.trim()) {
-        await store.dispatch('performSearch', searchQuery.value)
-        await router.push('/search')
-      }
+      await store.dispatch('performSearch', searchQuery.value)
+      await router.push('/search')
     }
 
     return {
