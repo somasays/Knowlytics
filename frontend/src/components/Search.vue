@@ -12,7 +12,7 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useStore } from 'vuex'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import debounce from 'lodash/debounce'
 
 export default {
@@ -20,19 +20,25 @@ export default {
   setup() {
     const store = useStore()
     const router = useRouter()
+    const route = useRoute()
     const searchQuery = ref('')
 
+    onMounted(() => {
+      const query = route.query.q || ''
+      searchQuery.value = query
+    })
+
     const search = () => {
-      store.dispatch('performSearch', searchQuery.value)
-      router.push({ name: 'SearchResults', query: { q: searchQuery.value } })
+      const query = searchQuery.value.trim()
+      if (query) {
+        store.dispatch('performSearch', { query, append: false })
+        router.push({ name: 'SearchResults', query: { q: query } })
+      } else {
+        store.commit('resetSearch')
+      }
     }
 
     const debouncedSearch = debounce(search, 300)
-
-    onMounted(() => {
-      // Perform an initial search when the component is mounted
-      search()
-    })
 
     return {
       searchQuery,
@@ -41,3 +47,9 @@ export default {
   }
 }
 </script>
+
+<style scoped lang="scss">
+.search-container {
+  /* Existing styles */
+}
+</style>

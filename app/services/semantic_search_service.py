@@ -1,6 +1,5 @@
 from app.services.elasticsearch_service import ElasticsearchService
 from app.services.neo4j_service import Neo4jService
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,9 +9,9 @@ class SemanticSearchService:
         self.es_service = es_service
         self.neo4j_service = neo4j_service
 
-    def search(self, query: str):
+    def search(self, query: str, from_: int = 0, size: int = 20):
         try:
-            # Perform Elasticsearch search
+            # Perform Elasticsearch search with pagination
             es_results = self.es_service.search(
                 index="data_products,glossary_terms",
                 query={
@@ -20,7 +19,9 @@ class SemanticSearchService:
                         "query": query,
                         "fields": ["name^2", "description", "term^2", "definition"]
                     }
-                }
+                },
+                from_=from_,
+                size=size
             )
 
             combined_results = []
@@ -47,13 +48,15 @@ class SemanticSearchService:
             return combined_results
         except Exception as e:
             logger.error(f"Error in SemanticSearchService.search: {str(e)}")
-            return []  # Return an empty list instead of raising an exception
+            return []
 
-    def get_all_results(self):
+    def get_all_results(self, from_: int = 0, size: int = 20):
         try:
             es_results = self.es_service.search(
                 index="data_products,glossary_terms",
-                query={"match_all": {}}
+                query={"match_all": {}},
+                from_=from_,
+                size=size
             )
 
             combined_results = []

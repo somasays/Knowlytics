@@ -11,7 +11,8 @@ const routes = [
   {
     path: '/search',
     name: 'SearchResults',
-    component: SearchResults
+    component: SearchResults,
+    props: route => ({ query: route.query.q })
   },
   // Add more routes as needed
 ]

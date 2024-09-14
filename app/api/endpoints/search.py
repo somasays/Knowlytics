@@ -15,14 +15,17 @@ def get_search_service(
 ) -> SemanticSearchService:
     return SemanticSearchService(es_service, neo4j_service)
 
-@router.get("/search", response_model=Dict[str, List[Dict[str, Any]]])
+@router.get("/search", response_model=Dict[str, Any])
 async def semantic_search(
     query: Optional[str] = Query(None, max_length=100),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
     search_service: SemanticSearchService = Depends(get_search_service)
 ):
+    from_ = (page - 1) * size
     if not query or not query.strip():
-        results = search_service.get_all_results()  # Implement this method
+        results = search_service.get_all_results(from_=from_, size=size)  # Update this method
     else:
-        results = search_service.search(query)
-    logger.info(f"Search results for query '{query}': {results}")
-    return {"results": results}
+        results = search_service.search(query, from_=from_, size=size)
+    logger.info(f"Search results for query '{query}' - Page {page}: {results}")
+    return {"results": results, "page": page, "size": size}

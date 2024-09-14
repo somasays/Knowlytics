@@ -11,5 +11,5 @@ class ElasticsearchService:
     def index_document(self, index, document):
         return self.es.index(index=index, document=document)
 
-    def search(self, index, query):
-        return self.es.search(index=index, query=query)
+    def search(self, index, query, from_: int = 0, size: int = 20):
+        return self.es.search(index=index, query=query, from_=from_, size=size)

@@ -7,11 +7,18 @@ export default createStore({
     searchLoading: false,
     searchError: null,
     searchPerformed: false,
+    currentPage: 1,
+    pageSize: 20,
+    hasMore: true,
+    currentQuery: ''
   },
   mutations: {
     setSearchResults(state, results) {
       state.searchResults = results
       state.searchPerformed = true
+    },
+    appendSearchResults(state, results) {
+      state.searchResults = [...state.searchResults, ...results]
     },
     setSearchLoading(state, isLoading) {
       state.searchLoading = isLoading
@@ -24,29 +31,52 @@ export default createStore({
       state.searchResults = []
       state.searchError = null
       state.searchPerformed = false
+      state.currentPage = 1
+      state.hasMore = true
+      state.currentQuery = ''
     },
+    setCurrentQuery(state, query) {
+      state.currentQuery = query
+    },
+    setHasMore(state, hasMore) {
+      state.hasMore = hasMore
+    },
+    incrementPage(state) {
+      state.currentPage += 1
+    }
   },
   actions: {
-    async performSearch({ commit }, query) {
-      console.log('Action: performSearch initiated with query:', query)
+    async performSearch({ commit, state }, { query, append = false }) {
+      if (!append) {
+        commit('resetSearch')
+        commit('setCurrentQuery', query)
+      }
       commit('setSearchLoading', true)
-      commit('resetSearch')
       try {
         const response = await axios.get('/api/v1/search', {
-          params: { query }
+          params: {
+            query: query,
+            page: state.currentPage,
+            size: state.pageSize
+          }
         })
-        console.log('API response received:', response)
-        if (response.data && response.data.results) {
-          commit('setSearchResults', response.data.results)
+        const results = response.data.results
+        if (append) {
+          commit('appendSearchResults', results)
         } else {
-          commit('setSearchResults', [])
+          commit('setSearchResults', results)
+        }
+        commit('setHasMore', results.length === state.pageSize)
+        if (append) {
+          commit('incrementPage')
         }
       } catch (error) {
-        console.error('Error performing search:', error)
-        commit('setSearchError', 'An error occurred while searching. Please try again.')
+        commit('setSearchError', 'An error occurred while fetching search results.')
       } finally {
         commit('setSearchLoading', false)
       }
     }
   },
+  modules: {
+  }
 })
